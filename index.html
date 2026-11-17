@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Для Вики</title>
+<link href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@500;700&display=swap" rel="stylesheet">
+<style>
+html,body{margin:0}
+body{min-height:100vh;background:#000;color:#fff;font-family:"Pixelify Sans","Comic Sans MS",cursive}
+/* fixed-фон через псевдоэлемент: background-attachment:fixed ломается на iOS */
+body::before{content:"";position:fixed;inset:0;z-index:-2;background:url(bg.jpg) center/cover}
+.g{position:fixed;z-index:0;height:auto;width:calc(var(--w) * var(--k,1) * 1px);pointer-events:none;image-rendering:pixelated;transform:rotate(var(--r))}
+main{position:relative;z-index:1;min-height:100vh;min-height:100dvh;box-sizing:border-box;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:28px;padding:16px;text-align:center}
+#t{
+  box-sizing:border-box;max-width:920px;width:100%;padding:26px 22px;
+  font-size:clamp(26px,5vw,54px);font-weight:700;line-height:1.3;
+  background:rgba(0,0,0,.72);border:4px solid #fff;border-radius:20px;
+}
+#t span{display:inline-block;animation:pop .3s ease-out}
+@keyframes pop{from{transform:scale(0)}}
+#t .end{background:linear-gradient(90deg,#f00,#f90,#ff0,#3f3,#0ff,#93f,#f0f,#f00) 0 0/300% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:pop .35s ease-out,shine 2s linear infinite}
+@keyframes shine{to{background-position:300% 0}}
+button{
+  font:700 clamp(18px,4.5vw,24px) "Pixelify Sans","Comic Sans MS",cursive;color:#000;cursor:pointer;
+  padding:14px 32px;border:4px solid #fff;border-radius:14px;background:#ffe94f;touch-action:manipulation;
+}
+button:hover{background:#4ff0ff}
+button:disabled{opacity:.6;cursor:default}
+#flash{position:fixed;inset:0;z-index:5;background:#fff;opacity:0;pointer-events:none}
+#flash.on{animation:flash .6s ease-out}
+@keyframes flash{from{opacity:1}}
+@media (max-width:700px){
+  main{gap:20px}
+  #t{padding:18px 14px;border-width:3px}
+  .g{--k:.6}
+  .g:nth-of-type(2n){display:none} /* на телефоне меньше гифок */
+}
+</style>
+</head>
+<body>
+<div id="flash"></div>
+<main>
+  <div id="t" aria-live="polite"></div>
+  <button id="b">Дальше</button>
+</main>
+<script>
+const END = 'купила мне хрумки и газяву'; // эта фраза появляется целиком
+const words = [...'Доброе утро, Вика, я бы хотел тебе в кое чём признаться, я действительно хочу чтобы ты'.split(' '), END];
+const t = document.getElementById('t'), b = document.getElementById('b'), flash = document.getElementById('flash');
+const rnd = (a, c) => a + Math.random() * (c - a);
+
+// гифки: [файл, left %, top %, ширина px, поворот °]
+const GIFS = [["g2_2.gif",1,1,150,-1],["g2_3.gif",11,2,170,1],["g2_4.gif",25,1,114,-5],["g2_6.gif",34,1,124,4],["g2_155.gif",45,0,128,7],["g2_158.gif",56,1,170,-4],["g2_150.gif",64,1,119,-6],["g2_101.gif",74,2,170,-6],["g2_102.gif",83,1,170,-8],["g2_140.gif",93,2,92,4],["g2_109.gif",0,20,154,1],["g2_112.gif",1,38,158,-7],["g2_129.gif",0,56,152,-1],["g2_72.gif",90,18,170,8],["g2_147.gif",93,38,150,3],["g2_189.gif",88,52,170,0],["g2_31.gif",2,82,146,-3],["g2_180.gif",14,80,145,-5],["g2_160.gif",22,86,150,0],["g_44.gif",36,84,150,-2],["g_48.gif",45,83,165,-8],["g_43.gif",55,80,158,0],["g_88.gif",66,82,134,0],["g_95.gif",75,84,150,-2],["g_98.gif",82,87,130,-3],["g_92.gif",93,76,97,1],["g_72.gif",0,72,150,1],["g_74.gif",7,22,120,3],["g_76.gif",86,34,150,-6],["g_82.gif",6,62,139,2],["g_29.gif",17,12,130,4],["g_30.gif",79,14,158,8],["g_39.gif",12,66,170,-1],["g_93.gif",80,70,170,-3],["g_70.gif",41,12,170,-1],["g_3.gif",60,72,110,7],["g_96.gif",30,86,130,0]];
+GIFS.forEach(([f, l, tp, w, r]) => {
+  const e = new Image();
+  e.src = `gif/${f}`;
+  e.alt = '';
+  e.className = 'g';
+  e.style.cssText = `left:${l}%;top:${tp}%;--w:${w};--r:${r}deg`;
+  document.body.append(e);
+});
+
+// нарастающий эффект перед финальной фразой: тряска и свечение растут, затем вспышка
+function buildup(done) {
+  b.disabled = true;
+  if (navigator.vibrate) navigator.vibrate([200, 100, 300, 100, 500]);
+  const t0 = performance.now(), D = 2500;
+  (function f(now) {
+    const p = Math.min((now - t0) / D, 1), a = p * p * 16;
+    t.style.transform = `translate(${rnd(-a, a)}px,${rnd(-a, a)}px) rotate(${rnd(-a, a) / 8}deg) scale(${1 + p * .08})`;
+    t.style.boxShadow = `0 0 ${p * 90}px ${p * 30}px hsl(${p * 1500} 100% 60%)`;
+    if (p < 1) return requestAnimationFrame(f);
+    t.style.transform = t.style.boxShadow = '';
+    flash.classList.remove('on'); void flash.offsetWidth; flash.classList.add('on');
+    b.disabled = false;
+    done();
+  })(t0);
+}
+
+let i = 0;
+function add() {
+  const s = document.createElement('span');
+  s.textContent = words[i];
+  if (++i === words.length) { s.className = 'end'; b.textContent = 'Ещё раз'; }
+  else s.style.color = `hsl(${i * 47} 100% 70%)`;
+  t.append(s, ' ');
+}
+function next() {
+  if (i === words.length) { t.innerHTML = ''; i = 0; b.textContent = 'Дальше'; }
+  if (i === words.length - 1) buildup(add); else add();
+}
+b.onclick = next;
+add();
+</script>
+</body>
+</html>
